@@ -68,12 +68,9 @@ def main(**args):
 
         categories = blog.categories if blog else model.Category.select()
         for c in categories:
-            print("TODO: process category " + c.path)
-            # category.process(c, config)
-        # if blog:
-        #   category.process(blog, config)
-
-        # TODO: also make a root category using blog.name and blog.description
+            category.process(c, config)
+        if blog:
+            category.process(blog, config)
 
 if __name__ == '__main__':
     main()

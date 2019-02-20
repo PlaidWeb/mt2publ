@@ -35,6 +35,7 @@ class Blog(db.Entity):
 
     """ hack to make this act like a category for the exporter """
     path = ''
+    basename = ''
 
 
 class Entry(db.Entity):
