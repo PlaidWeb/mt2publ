@@ -52,16 +52,25 @@ def main():
     model.connect(provider='sqlite', filename=config.db)
 
     with orm.db_session():
+        if config.blog_id:
+            blog = model.Blog.get(blog_id=config.blog_id)
+        else:
+            blog = None
+
         # Get the path alias mappings
+        alias_templates = blog.template_maps if blog else model.TemplateMap.select()
         alias_templates = orm.select(
-            e for e in model.TemplateMap
+            e for e in alias_templates
             if e.archive_type == 'Individual'
             and e.file_template != ''
             and e.file_template is not None)
-        if config.blog_id:
-            alias_templates = orm.select(
-                e for e in alias_templates if e.blog_id == config.blog_id)
 
         LOGGER.debug('Alias templates: %s', list(alias_templates))
 
-        entry.run(config, list(alias_templates))
+        entries = blog.entries if blog else model.Entry.select()
+        for e in entries:
+            entry.process(e, config, alias_templates)
+
+        categories = blog.categories if blog else model.Category.select()
+        for c in categories:
+            print("TODO: process category " + c.path)

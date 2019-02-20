@@ -269,12 +269,3 @@ def process(entry, config, alias_templates):
     if config.content_dir:
         save_file(message, os.path.join(config.content_dir,
                                         output_directory), output_filename)
-
-
-@orm.db_session()
-def run(config, alias_templates):
-    query = model.Entry.select()
-    if config.blog_id:
-        query = orm.select(e for e in query if e.blog_id == config.blog_id)
-    for entry in query:
-        process(entry, config, alias_templates)

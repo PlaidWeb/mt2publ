@@ -19,11 +19,21 @@ class Author(db.Entity):
     entries = orm.Set("Entry")
 
 
+class Blog(db.Entity):
+    _table_ = 'mt_blog'
+
+    blog_id = orm.PrimaryKey(int, column='blog_id')
+
+    entries = orm.Set('Entry')
+    categories = orm.Set('Category')
+    template_maps = orm.Set('TemplateMap')
+
+
 class Entry(db.Entity):
     _table_ = 'mt_entry'
 
     entry_id = orm.PrimaryKey(int, column='entry_id')
-    blog_id = orm.Optional(int, column='entry_blog_id')
+    blog = orm.Optional(Blog, column='entry_blog_id')
 
     allow_comments = orm.Optional(bool, column='entry_allow_comments')
     author = orm.Optional(Author, column='entry_author_id')
@@ -49,7 +59,7 @@ class Category(db.Entity):
     _table_ = 'mt_category'
 
     category_id = orm.PrimaryKey(int, column='category_id')
-    blog_id = orm.Optional(int, column='category_blog_id')
+    blog = orm.Optional(Blog, column='category_blog_id')
 
     basename = orm.Optional(str, column='category_basename')
     name = orm.Optional(str, column='category_label')
@@ -80,7 +90,7 @@ class TemplateMap(db.Entity):
     _table_ = 'mt_templatemap'
 
     templatemap_id = orm.PrimaryKey(int, column='templatemap_id')
-    blog_id = orm.Optional(int, column='templatemap_blog_id')
+    blog = orm.Optional(Blog, column='templatemap_blog_id')
 
     archive_type = orm.Optional(str, column='templatemap_archive_type')
     file_template = orm.Optional(str, column='templatemap_file_template')
