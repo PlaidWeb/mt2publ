@@ -4,8 +4,12 @@ import email.message
 import logging
 import re
 import os
+import html
+import html.parser
 
-import slugify
+from pony import orm
+
+from . import model
 
 LOGGER = logging.getLogger("mt2publ.entry")
 
@@ -46,10 +50,63 @@ def get_category(entry):
     return best_path
 
 
+class HtmlCleanup(html.parser.HTMLParser):
+    """ HTML sanitizer to remove MT's weird editor extensions """
+    ignore_tags = {'form'}
+    ignore_attrs = {'mt:asset-id', 'contenteditable'}
+
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.strict = False
+        self.convert_charrefs = False
+        self._fed = []
+
+    def get_data(self):
+        return ''.join(self._fed)
+
+    def error(self, message):
+        """ Deprecated, per https://bugs.python.org/issue31844 """
+        return message
+
+    def handle_starttag(self, tag, attrs):
+        self._handle_tag(tag, attrs, False)
+
+    def handle_startendtag(self, tag, attrs):
+        self._handle_tag(tag, attrs, True)
+
+    def handle_data(self, data):
+        self._fed.append(data)
+
+    def handle_endtag(self, tag):
+        if tag.lower() in HtmlCleanup.ignore_tags:
+            return
+        self._fed.append('</{}>'.format(tag))
+
+    def _handle_tag(self, tag, attrs, selfclose):
+        if tag.lower() in HtmlCleanup.ignore_tags:
+            return
+
+        out = '<' + tag
+        for k, v in attrs:
+            if k.lower() not in HtmlCleanup.ignore_attrs:
+                out += ' ' + k
+            if v:
+                out += '="{}"'.format(html.escape(v))
+
+        if selfclose:
+            out += ' /'
+        out += '>'
+        self._fed.append(out)
+
+
 def format_text(text, convert):
     """ Format the text the way MT would """
 
-    # TODO: convert <form mt:asset-id> stuff into the actual asset link
+    # strip out MT's editor extensions
+    cleaner = HtmlCleanup()
+    cleaner.feed(text)
+    text = cleaner.get_data()
 
     if not convert:
         return text
@@ -63,9 +120,10 @@ def format_text(text, convert):
     paras = re.split('\n\n+', text)
 
     # reformat the paragraphs using the same logic as MT
+    # adapted from MT::Util::html_text_transform
     formatted = []
     for para in paras:
-        if not re.search('</?(?:h1|h2|h3|h4|h5|h6|table|ol|dl|ul|menu|dir|p|pre|center|form|fieldset|select|blockquote|address|div|hr)', para):
+        if not re.search('</?(?:h[1-6]|table|ol|dl|ul|menu|dir|p|pre|center|form|fieldset|select|blockquote|address|div|hr)', para, re.I):
             para = '<p>' + para.replace('\n', '<br/>\n') + '</p>'
 
     return '\n\n'.join(paras)
@@ -87,7 +145,63 @@ def format_message(message):
     return output
 
 
-def process(entry, config):
+def build_path_aliases(entry, category, templates):
+    """ Convert a template mapping to a path-alias """
+
+    # see
+    # https://movabletype.org/documentation/appendices/archive-file-path-specifiers.html
+    params = {
+        'a': entry.author.basename,
+        'b': entry.basename,
+        'c': category.path if category else '',
+        'C': category.basename if category else '',
+        'd': entry.created.strftime('%d'),
+        'D': entry.created.strftime('%a'),
+        'e': '%06d' % entry.entry_id,
+        'E': str(entry.entry_id),
+        'f': 'index.html',  # TODO
+        'F': 'index',  # TODO
+        'h': entry.created.strftime('%H'),
+        'H': entry.created.strftime('%-H'),
+        'i': 'index.html',  # TODO
+        'I': 'index',  # TODO
+        'j': entry.created.strftime('%j'),
+        'm': entry.created.strftime('%m'),
+        'M': entry.created.strftime('%b'),
+        'n': entry.created.strftime('%M'),
+        's': entry.created.strftime('%S'),
+        'x': '.html',  # TODO
+        'y': entry.created.strftime('%Y'),
+        'Y': entry.created.strftime('%y')
+    }
+
+    aliases = []
+    for template in templates:
+        # This is inefficient but it's easy to reason around.
+        out = template.file_template
+        while '%' in out:
+            idx = out.find('%')
+            if out[idx + 1] == '-':
+                token = out[idx + 2]
+                dash = True
+                skip = 3
+            else:
+                token = out[idx + 1]
+                dash = False
+                skip = 2
+
+            subst = params[token]
+            if dash:
+                subst = subst.replace('_', '-')
+
+            out = out[0:idx] + subst + out[idx + skip:]
+
+        aliases.append('/' + out)
+
+    return aliases
+
+
+def process(entry, config, alias_templates):
     """ Process an entry from the database, saving it with the provided configuration """
 
     LOGGER.debug("Entry %d", entry.entry_id)
@@ -105,6 +219,14 @@ def process(entry, config):
     if entry.last_modified:
         message['Last-Modified'] = entry.last_modified.isoformat()
 
+    if entry.author.author_id > 0:
+        if entry.author.name:
+            message['Author'] = entry.author.name
+        if entry.author.url:
+            message['Author-URL'] = entry.author.url
+        if entry.author.email:
+            message['Author-Email'] = entry.author.email
+
     nl2br, ext = FORMATS[entry.file_format]
 
     body = format_text(entry.text, nl2br)
@@ -113,27 +235,30 @@ def process(entry, config):
             format_text(entry.more, nl2br)
     message.set_payload(body)
 
-    if entry.status:
+    if entry.status not in [2, 4]:
         message['Status'] = PUBLISH_STATUS[entry.status]
 
     if entry.entry_type != 'entry':
         message['Entry-Type'] = entry.entry_type
 
-    # Categories don't really cleanly map between MT and Publ...
+    # Categories don't really cleanly map between MT and Publ, so let's just
+    # preserve these as custom headers for now
+    category = None
     for placement in entry.categories:
         if placement.is_primary:
-            message['Import-Category'] = placement.category.path
+            category = placement.category
+            message['Import-MainCategory'] = placement.category.path
         else:
             message['Import-OtherCategory'] = placement.category.path
+
+    for alias in build_path_aliases(entry, category, alias_templates):
+        message['Path-Alias'] = alias
 
     # For simplicity's sake we'll only use the file path for the category
     output_category = get_category(entry)
     output_directory = os.path.join(*output_category.split('/'))
 
-    output_filename = '{slug}-{id}.{ext}'.format(
-        id=entry.entry_id,
-        slug=entry.slug_text or slugify.slugify(entry.title),
-        ext=ext)
+    output_filename = f'{entry.basename}-{entry.entry_id}.{ext}'
 
     output_text = format_message(message)
     LOGGER.info("Output file: %s", os.path.join(
@@ -143,3 +268,12 @@ def process(entry, config):
     if config.content_dir:
         save_file(message, os.path.join(config.content_dir,
                                         output_directory), output_filename)
+
+
+@orm.db_session()
+def run(config, alias_templates):
+    query = model.Entry.select()
+    if config.blog_id:
+        query = orm.select(e for e in query if e.blog_id == config.blog_id)
+    for entry in query:
+        process(entry, config, alias_templates)

@@ -11,7 +11,9 @@ class Author(db.Entity):
     _table_ = 'mt_author'
 
     author_id = orm.PrimaryKey(int, column='author_id')
-    name = orm.Optional(str, column='author_name')
+    basename = orm.Optional(str, column='author_basename')
+    username = orm.Optional(str, column='author_name')
+    name = orm.Optional(str, column='author_nickname')
     email = orm.Optional(str, column='author_email')
     url = orm.Optional(str, column='author_url')
     entries = orm.Set("Entry")
@@ -21,10 +23,11 @@ class Entry(db.Entity):
     _table_ = 'mt_entry'
 
     entry_id = orm.PrimaryKey(int, column='entry_id')
+    blog_id = orm.Optional(int, column='entry_blog_id')
 
     allow_comments = orm.Optional(bool, column='entry_allow_comments')
     author = orm.Optional(Author, column='entry_author_id')
-    slug_text = orm.Optional(str, column='entry_basename')
+    basename = orm.Optional(str, column='entry_basename')
 
     title = orm.Optional(str, column='entry_title')
     text = orm.Optional(str, column='entry_text')
@@ -46,6 +49,7 @@ class Category(db.Entity):
     _table_ = 'mt_category'
 
     category_id = orm.PrimaryKey(int, column='category_id')
+    blog_id = orm.Optional(int, column='category_blog_id')
 
     basename = orm.Optional(str, column='category_basename')
     name = orm.Optional(str, column='category_label')
@@ -70,6 +74,16 @@ class Placement(db.Entity):
     entry = orm.Required(Entry, column='placement_entry_id')
     category = orm.Required(Category, column='placement_category_id')
     is_primary = orm.Required(bool, column='placement_is_primary')
+
+
+class TemplateMap(db.Entity):
+    _table_ = 'mt_templatemap'
+
+    templatemap_id = orm.PrimaryKey(int, column='templatemap_id')
+    blog_id = orm.Optional(int, column='templatemap_blog_id')
+
+    archive_type = orm.Optional(str, column='templatemap_archive_type')
+    file_template = orm.Optional(str, column='templatemap_file_template')
 
 
 def connect(**db_config):

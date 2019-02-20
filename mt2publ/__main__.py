@@ -7,7 +7,7 @@ import urllib.parse
 from pony import orm
 
 from . import model, __version__
-from . import entry
+from . import category, entry
 
 
 LOG_LEVELS = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
@@ -25,6 +25,9 @@ def parse_args(*args):
     parser.add_argument("-v", "--verbosity", action="count",
                         help="increase output verbosity",
                         default=0)
+
+    parser.add_argument("--blog-id", "-b", type=int, dest="blog_id",
+                        help="Restrict entries to a specific blog", default=None)
 
     parser.add_argument('--content', '-c', type=str, dest='content_dir',
                         help='Output content directory')
@@ -49,5 +52,16 @@ def main():
     model.connect(provider='sqlite', filename=config.db)
 
     with orm.db_session():
-        for e in model.Entry.select():
-            entry.process(e, config)
+        # Get the path alias mappings
+        alias_templates = orm.select(
+            e for e in model.TemplateMap
+            if e.archive_type == 'Individual'
+            and e.file_template != ''
+            and e.file_template is not None)
+        if config.blog_id:
+            alias_templates = orm.select(
+                e for e in alias_templates if e.blog_id == blog_id)
+
+        LOGGER.debug('Alias templates: %s', list(alias_templates))
+
+        entry.run(config, list(alias_templates))
