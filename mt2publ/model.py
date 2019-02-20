@@ -37,7 +37,7 @@ class Entry(db.Entity):
 
     status = orm.Required(int, column='entry_status')
 
-    convert_linebreaks = orm.Optional(bool, column='entry_convert_breaks')
+    file_format = orm.Optional(bool, column='entry_convert_breaks')
 
     categories = orm.Set('Placement')
 

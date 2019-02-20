@@ -12,6 +12,15 @@ LOGGER = logging.getLogger("mt2publ.entry")
 # Map MT status codes to Publ equivalents
 PUBLISH_STATUS = [None, 'DRAFT', 'PUBLISHED', 'HIDDEN', 'SCHEDULED', 'GONE']
 
+# Map MT format type to (linebreaks,extension)
+FORMATS = {
+    None: (False, 'html'),
+    False: (False, 'html'),
+    True: (True, 'html'),
+    'richtext': (True, 'html'),
+    'markdown': (False, 'md'),
+}
+
 
 def get_category(entry):
     """ Try to figure out what the actual category is of the entry, using the
@@ -38,9 +47,14 @@ def get_category(entry):
 
 
 def format_text(text, convert):
-    """ Format the text based on the convert_line_breaks setting """
+    """ Format the text the way MT would """
+
+    # TODO: convert <form mt:asset-id> stuff into the actual asset link
+
     if not convert:
         return text
+
+    # All other known formats do the li2br thing
 
     # strip out DOS line endings
     text = text.replace('\r', '')
@@ -91,10 +105,12 @@ def process(entry, config):
     if entry.last_modified:
         message['Last-Modified'] = entry.last_modified.isoformat()
 
-    body = format_text(entry.text, entry.convert_linebreaks)
+    nl2br, ext = FORMATS[entry.file_format]
+
+    body = format_text(entry.text, nl2br)
     if entry.more:
         body += '\n.....\n' + \
-            format_text(entry.more, entry.convert_linebreaks)
+            format_text(entry.more, nl2br)
     message.set_payload(body)
 
     if entry.status:
@@ -113,9 +129,10 @@ def process(entry, config):
     # For simplicity's sake we'll only use the file path for the category
     output_directory = os.path.join(*get_category(entry).split('/'))
 
-    output_filename = 'import-{id}-{slug}.html'.format(
+    output_filename = 'import-{id}-{slug}.{ext}'.format(
         id=entry.entry_id,
-        slug=entry.slug_text or slugify.slugify(entry.title))
+        slug=entry.slug_text or slugify.slugify(entry.title),
+        ext=ext)
 
     output_text = format_message(message)
     LOGGER.debug("Dry run file: %s/%s\n%s\n\n",
