@@ -172,7 +172,8 @@ def build_path_aliases(entry, category, templates):
         's': entry.created.strftime('%S'),
         'x': '.html',  # TODO
         'y': entry.created.strftime('%Y'),
-        'Y': entry.created.strftime('%y')
+        'Y': entry.created.strftime('%y'),
+        '%': '%'
     }
 
     aliases = []
