@@ -56,6 +56,7 @@ setup(
 
     install_requires=[
         'pony',
+        'awesome-slugify',
     ],
 
     extras_require={

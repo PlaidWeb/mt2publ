@@ -37,6 +37,8 @@ class Entry(db.Entity):
 
     status = orm.Required(int, column='entry_status')
 
+    convert_linebreaks = orm.Optional(bool, column='entry_convert_breaks')
+
     categories = orm.Set('Placement')
 
 
@@ -55,7 +57,7 @@ class Category(db.Entity):
 
     @property
     def path(self):
-        if self.parent:
+        if self.parent and self.parent.category_id:
             return self.parent.path + '/' + self.basename
         return self.basename
 
