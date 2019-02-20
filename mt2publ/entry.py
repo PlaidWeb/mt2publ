@@ -15,8 +15,8 @@ PUBLISH_STATUS = [None, 'DRAFT', 'PUBLISHED', 'HIDDEN', 'SCHEDULED', 'GONE']
 # Map MT format type to (linebreaks,extension)
 FORMATS = {
     None: (False, 'html'),
-    False: (False, 'html'),
-    True: (True, 'html'),
+    '': (False, 'html'),
+    '0': (False, 'html'),
     'richtext': (True, 'html'),
     'markdown': (False, 'md'),
 }
@@ -90,7 +90,7 @@ def format_message(message):
 def process(entry, config):
     """ Process an entry from the database, saving it with the provided configuration """
 
-    LOGGER.info("Entry %d", entry.entry_id)
+    LOGGER.debug("Entry %d", entry.entry_id)
 
     message = email.message.Message()
 
@@ -127,16 +127,18 @@ def process(entry, config):
             message['Import-OtherCategory'] = placement.category.path
 
     # For simplicity's sake we'll only use the file path for the category
-    output_directory = os.path.join(*get_category(entry).split('/'))
+    output_category = get_category(entry)
+    output_directory = os.path.join(*output_category.split('/'))
 
-    output_filename = 'import-{id}-{slug}.{ext}'.format(
+    output_filename = '{slug}-{id}.{ext}'.format(
         id=entry.entry_id,
         slug=entry.slug_text or slugify.slugify(entry.title),
         ext=ext)
 
     output_text = format_message(message)
-    LOGGER.debug("Dry run file: %s/%s\n%s\n\n",
-                 output_directory, output_filename, output_text)
+    LOGGER.info("Output file: %s", os.path.join(
+        output_directory, output_filename))
+    LOGGER.debug("%s", output_text)
 
     if config.content_dir:
         save_file(message, os.path.join(config.content_dir,
