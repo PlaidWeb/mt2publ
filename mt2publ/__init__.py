@@ -23,6 +23,13 @@ def save_file(message, path, force_overwrite):
 
     with tempfile.NamedTemporaryFile('w', delete=False) as file:
         tmpfile = file.name
-        file.write(str(message))
+        # we can't just use file.write(str(entry)) because otherwise the
+        # headers "helpfully" do MIME encoding normalization.
+        # str(val) is necessary to get around email.header's encoding
+        # shenanigans
+        for key, val in entry.items():
+            print('{}: {}'.format(key, str(val)), file=file)
+        print('', file=file)
+        file.write(entry.get_payload())
 
     shutil.move(tmpfile, path)
