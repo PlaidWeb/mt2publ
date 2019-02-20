@@ -60,7 +60,7 @@ def main():
             and e.file_template is not None)
         if config.blog_id:
             alias_templates = orm.select(
-                e for e in alias_templates if e.blog_id == blog_id)
+                e for e in alias_templates if e.blog_id == config.blog_id)
 
         LOGGER.debug('Alias templates: %s', list(alias_templates))
 

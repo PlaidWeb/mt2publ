@@ -231,7 +231,7 @@ def process(entry, config, alias_templates):
 
     body = format_text(entry.text, nl2br)
     if entry.more:
-        body += '\n.....\n' + \
+        body += '\n\n.....\n\n' + \
             format_text(entry.more, nl2br)
     message.set_payload(body)
 
