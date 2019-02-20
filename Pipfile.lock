@@ -1,0 +1,32 @@
+{
+    "_meta": {
+        "hash": {
+            "sha256": "6b9db9026ae018c096cc83eec0af01505819c97a2ac57de322ed4a60171c82bf"
+        },
+        "pipfile-spec": 6,
+        "requires": {
+            "python_version": "3.7"
+        },
+        "sources": [
+            {
+                "name": "pypi",
+                "url": "https://pypi.org/simple",
+                "verify_ssl": true
+            }
+        ]
+    },
+    "default": {
+        "mt2publ": {
+            "editable": true,
+            "path": "."
+        },
+        "pony": {
+            "hashes": [
+                "sha256:2fdc41d9dcf2b6e70dd0623e328f31349b559b8f5e83996f9272bac4fd7b279c",
+                "sha256:6623df16c3b485615517a97c150f58a60679a0e033fa67fdba50abb7db9d4217"
+            ],
+            "version": "==0.7.9"
+        }
+    },
+    "develop": {}
+}
