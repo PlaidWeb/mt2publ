@@ -25,6 +25,12 @@ FORMATS = {
     'markdown': (False, 'md'),
 }
 
+# Map MT page types to archive types
+ARCHIVE_MAP = {
+    'entry': 'Individual',
+    'page': 'Page',
+}
+
 
 def get_category(entry):
     """ Try to figure out what the actual category is of the entry, using the
@@ -145,11 +151,12 @@ def format_message(message):
     return output
 
 
-def build_path_aliases(entry, category, templates):
+def build_path_aliases(entry, category, templates, archive_type):
     """ Convert a template mapping to a path-alias """
 
     # see
     # https://movabletype.org/documentation/appendices/archive-file-path-specifiers.html
+    ext = '.' + entry.blog.file_extension
     params = {
         'a': entry.author.basename,
         'b': entry.basename,
@@ -159,25 +166,25 @@ def build_path_aliases(entry, category, templates):
         'D': entry.created.strftime('%a'),
         'e': '%06d' % entry.entry_id,
         'E': str(entry.entry_id),
-        'f': 'index.html',  # TODO
-        'F': 'index',  # TODO
+        'f': entry.basename + ext,
+        'F': entry.basename,
         'h': entry.created.strftime('%H'),
         'H': entry.created.strftime('%-H'),
-        'i': 'index.html',  # TODO
+        'i': 'index' + ext,  # TODO
         'I': 'index',  # TODO
         'j': entry.created.strftime('%j'),
         'm': entry.created.strftime('%m'),
         'M': entry.created.strftime('%b'),
         'n': entry.created.strftime('%M'),
         's': entry.created.strftime('%S'),
-        'x': '.html',  # TODO
+        'x': ext,
         'y': entry.created.strftime('%Y'),
         'Y': entry.created.strftime('%y'),
         '%': '%'
     }
 
     aliases = []
-    for template in templates:
+    for template in (t for t in templates if t.archive_type == archive_type):
         # This is inefficient but it's easy to reason around.
         out = template.file_template
         while '%' in out:
@@ -197,7 +204,9 @@ def build_path_aliases(entry, category, templates):
 
             out = out[0:idx] + subst + out[idx + skip:]
 
-        aliases.append('/' + out)
+        out = '/' + out
+        out = out.replace('//', '/')
+        aliases.append(out)
 
     return aliases
 
@@ -252,7 +261,7 @@ def process(entry, config, alias_templates):
         else:
             message['Import-OtherCategory'] = placement.category.path
 
-    for alias in build_path_aliases(entry, category, alias_templates):
+    for alias in build_path_aliases(entry, category, alias_templates, ARCHIVE_MAP[entry.entry_type]):
         message['Path-Alias'] = alias
 
     # For simplicity's sake we'll only use the file path for the category

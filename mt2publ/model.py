@@ -28,6 +28,8 @@ class Blog(db.Entity):
     categories = orm.Set('Category')
     template_maps = orm.Set('TemplateMap')
 
+    file_extension = orm.Optional(str, column='blog_file_extension')
+
 
 class Entry(db.Entity):
     _table_ = 'mt_entry'

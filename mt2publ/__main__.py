@@ -60,10 +60,7 @@ def main():
         # Get the path alias mappings
         alias_templates = blog.template_maps if blog else model.TemplateMap.select()
         alias_templates = orm.select(
-            e for e in alias_templates
-            if e.archive_type == 'Individual'
-            and e.file_template != ''
-            and e.file_template is not None)
+            e for e in alias_templates if e.file_template != '' and e.file_template is not None)
 
         LOGGER.debug('Alias templates: %s', list(alias_templates))
 
