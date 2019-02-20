@@ -3,7 +3,6 @@
 import argparse
 import logging
 
-import urllib.parse
 from pony import orm
 
 from . import model, __version__
@@ -16,6 +15,7 @@ LOGGER = logging.getLogger("mt2publ.main")
 
 
 def parse_args(*args):
+    """ parse arguments """
     parser = argparse.ArgumentParser(
         description="Convert an MT database to a Publ content store")
 
@@ -46,7 +46,6 @@ def main(**args):
     logging.basicConfig(level=LOG_LEVELS[min(
         config.verbosity, len(LOG_LEVELS) - 1)])
 
-    # TODO support mysql, postgres, etc.
     model.connect(provider='sqlite', filename=config.db)
 
     with orm.db_session():
@@ -63,12 +62,12 @@ def main(**args):
         LOGGER.debug('Alias templates: %s', list(alias_templates))
 
         entries = blog.entries if blog else model.Entry.select()
-        for e in entries:
-            entry.process(e, config, alias_templates)
+        for item in entries:
+            entry.process(item, config, alias_templates)
 
         categories = blog.categories if blog else model.Category.select()
-        for c in categories:
-            category.process(c, config)
+        for item in categories:
+            category.process(item, config)
         if blog:
             category.process(blog, config)
 

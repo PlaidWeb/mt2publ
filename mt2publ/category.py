@@ -4,7 +4,6 @@ import logging
 import email.message
 import os.path
 
-from . import model
 from . import save_file
 
 LOGGER = logging.getLogger("mt2publ.category")
@@ -12,8 +11,6 @@ LOGGER = logging.getLogger("mt2publ.category")
 
 def process(category, config):
     """ Process a category to produce a metadata file """
-    path = category.path
-
     write = False
 
     message = email.message.Message()
@@ -35,9 +32,4 @@ def process(category, config):
 
     output_filename = os.path.join(*category.path.split('/'), f'_{category.basename}.cat')
 
-    LOGGER.info("Output file: %s", output_filename)
-    LOGGER.debug("%s", message)
-
-    if config.content_dir:
-        save_file(message, os.path.join(config.content_dir,
-                                        output_filename), config.force_overwrite)
+    save_file(message, config.content_dir, output_filename, config)

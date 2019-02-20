@@ -9,15 +9,21 @@ import shutil
 LOGGER = logging.getLogger('mt2publ')
 
 
-def save_file(message, path, force_overwrite):
+def save_file(message, dest, filename, config):
     """ save the message data to the specified file as an atomic operation """
+    LOGGER.info("Output filename: %s", filename)
+    if not dest:
+        LOGGER.debug("No destination set")
+        return
+
+    path = os.path.join(dest, filename)
 
     try:
         os.makedirs(os.path.dirname(path))
     except FileExistsError:
         pass
 
-    if os.path.isfile(path) and not force_overwrite:
+    if os.path.isfile(path) and not config.force_overwrite:
         LOGGER.warning("Refusing to overwrite existing file %s", path)
         return
 

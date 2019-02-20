@@ -7,9 +7,7 @@ import os
 import html
 import html.parser
 
-from pony import orm
-
-from . import model, save_file
+from . import save_file
 
 LOGGER = logging.getLogger("mt2publ.entry")
 
@@ -69,6 +67,7 @@ class HtmlCleanup(html.parser.HTMLParser):
         self._fed = []
 
     def get_data(self):
+        """ Get the filtered HTML """
         return ''.join(self._fed)
 
     def error(self, message):
@@ -94,11 +93,11 @@ class HtmlCleanup(html.parser.HTMLParser):
             return
 
         out = '<' + tag
-        for k, v in attrs:
+        for k, val in attrs:
             if k.lower() not in HtmlCleanup.ignore_attrs:
                 out += ' ' + k
-            if v:
-                out += '="{}"'.format(html.escape(v))
+            if val:
+                out += '="{}"'.format(html.escape(val))
 
         if selfclose:
             out += ' /'
@@ -127,9 +126,9 @@ def format_text(text, convert):
 
     # reformat the paragraphs using the same logic as MT
     # adapted from MT::Util::html_text_transform
-    formatted = []
     for para in paras:
-        if not re.search('</?(?:h[1-6]|table|ol|dl|ul|menu|dir|p|pre|center|form|fieldset|select|blockquote|address|div|hr)', para, re.I):
+        if not re.search('</?(?:h[1-6]|table|ol|dl|ul|menu|dir|p|pre|center|' +
+                         'form|fieldset|select|blockquote|address|div|hr)', para, re.I):
             para = '<p>' + para.replace('\n', '<br/>\n') + '</p>'
 
     return '\n\n'.join(paras)
@@ -159,8 +158,8 @@ def build_path_aliases(entry, category, templates, archive_type):
         'F': entry.basename,
         'h': entry.created.strftime('%H'),
         'H': entry.created.strftime('%-H'),
-        'i': 'index' + ext,  # TODO
-        'I': 'index',  # TODO
+        'i': 'index' + ext,
+        'I': 'index',
         'j': entry.created.strftime('%j'),
         'm': entry.created.strftime('%m'),
         'M': entry.created.strftime('%b'),
@@ -207,6 +206,7 @@ def build_path_aliases(entry, category, templates, archive_type):
 
 def process(entry, config, alias_templates):
     """ Process an entry from the database, saving it with the provided configuration """
+    # pylint:disable=too-many-branches
 
     LOGGER.debug("Entry %d", entry.entry_id)
 
@@ -255,16 +255,13 @@ def process(entry, config, alias_templates):
         else:
             message['Import-OtherCategory'] = placement.category.path
 
-    for alias in build_path_aliases(entry, category, alias_templates, ARCHIVE_MAP[entry.entry_type]):
+    for alias in build_path_aliases(entry, category, alias_templates,
+                                    ARCHIVE_MAP[entry.entry_type]):
         message['Path-Alias'] = alias
 
     # For simplicity's sake we'll only use the file path for the category
     output_category = get_category(entry)
-    output_filename = os.path.join(*output_category.split('/'), f'{entry.basename}-{entry.entry_id}.{ext}')
+    output_filename = os.path.join(*output_category.split('/'),
+                                   f'{entry.basename}-{entry.entry_id}.{ext}')
 
-    LOGGER.info("Output file: %s", output_filename)
-    LOGGER.debug("%s", message)
-
-    if config.content_dir:
-        save_file(message, os.path.join(config.content_dir,
-                                        output_filename), config.force_overwrite)
+    save_file(message, config.content_dir, output_filename, config)

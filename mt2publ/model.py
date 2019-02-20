@@ -8,6 +8,7 @@ db = orm.Database()  # pylint: disable=invalid-name
 
 
 class Author(db.Entity):
+    """ Blog authors """
     _table_ = 'mt_author'
 
     author_id = orm.PrimaryKey(int, column='author_id')
@@ -20,6 +21,7 @@ class Author(db.Entity):
 
 
 class Blog(db.Entity):
+    """ Top-level blogs """
     _table_ = 'mt_blog'
 
     blog_id = orm.PrimaryKey(int, column='blog_id')
@@ -39,6 +41,7 @@ class Blog(db.Entity):
 
 
 class Entry(db.Entity):
+    """ Entries """
     _table_ = 'mt_entry'
 
     entry_id = orm.PrimaryKey(int, column='entry_id')
@@ -65,6 +68,7 @@ class Entry(db.Entity):
 
 
 class Category(db.Entity):
+    """ Categories """
     _table_ = 'mt_category'
 
     category_id = orm.PrimaryKey(int, column='category_id')
@@ -80,12 +84,14 @@ class Category(db.Entity):
 
     @property
     def path(self):
+        """ Get the full path to this category """
         if self.parent and self.parent.category_id:
             return self.parent.path + '/' + self.basename
         return self.basename
 
 
 class Placement(db.Entity):
+    """ Entry placements """
     _table_ = 'mt_placement'
 
     placement_id = orm.PrimaryKey(int, column='placement_id')
@@ -96,6 +102,7 @@ class Placement(db.Entity):
 
 
 class TemplateMap(db.Entity):
+    """ Template mappings """
     _table_ = 'mt_templatemap'
 
     templatemap_id = orm.PrimaryKey(int, column='templatemap_id')
@@ -106,5 +113,6 @@ class TemplateMap(db.Entity):
 
 
 def connect(**db_config):
+    """ Connect to the database """
     db.bind(**db_config)
     db.generate_mapping(create_tables=False)
