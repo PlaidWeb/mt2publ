@@ -187,8 +187,12 @@ def build_path_aliases(entry, category, templates, archive_type):
     for template in (t for t in templates if t.archive_type == archive_type):
         # This is inefficient but it's easy to reason around.
         out = template.file_template
-        while '%' in out:
-            idx = out.find('%')
+        idx = 0
+        while idx < len(out):
+            idx = out.find('%', idx)
+            if idx < 0:
+                break
+
             if out[idx + 1] == '-':
                 token = out[idx + 2]
                 dash = True
@@ -203,6 +207,7 @@ def build_path_aliases(entry, category, templates, archive_type):
                 subst = subst.replace('_', '-')
 
             out = out[0:idx] + subst + out[idx + skip:]
+            idx = idx + 1
 
         out = '/' + out
         out = out.replace('//', '/')
