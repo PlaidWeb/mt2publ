@@ -9,7 +9,7 @@ import html.parser
 
 from pony import orm
 
-from . import model
+from . import model, save_file
 
 LOGGER = logging.getLogger("mt2publ.entry")
 
@@ -140,17 +140,6 @@ def demarkdown(text):
     return re.sub('</?em>', '*', text)
 
 
-def format_message(message):
-    """ Convert an email.message into a text string, eliding MIME encoding stuff """
-    output = ''
-    for key, val in message.items():
-        output += '{}: {}\n'.format(str(key), str(val))
-    output += '\n'
-    output += message.get_payload()
-
-    return output
-
-
 def build_path_aliases(entry, category, templates, archive_type):
     """ Convert a template mapping to a path-alias """
 
@@ -271,15 +260,11 @@ def process(entry, config, alias_templates):
 
     # For simplicity's sake we'll only use the file path for the category
     output_category = get_category(entry)
-    output_directory = os.path.join(*output_category.split('/'))
+    output_filename = os.path.join(*output_category.split('/'), f'{entry.basename}-{entry.entry_id}.{ext}')
 
-    output_filename = f'{entry.basename}-{entry.entry_id}.{ext}'
-
-    output_text = format_message(message)
-    LOGGER.info("Output file: %s", os.path.join(
-        output_directory, output_filename))
-    LOGGER.debug("%s", output_text)
+    LOGGER.info("Output file: %s", output_filename)
+    LOGGER.debug("%s", message)
 
     if config.content_dir:
         save_file(message, os.path.join(config.content_dir,
-                                        output_directory), output_filename)
+                                        output_filename), config.force_overwrite)
