@@ -24,11 +24,17 @@ class Blog(db.Entity):
 
     blog_id = orm.PrimaryKey(int, column='blog_id')
 
+    name = orm.Optional(str, column='blog_name')
+    description = orm.Optional(str, column='blog_description')
+
     entries = orm.Set('Entry')
     categories = orm.Set('Category')
     template_maps = orm.Set('TemplateMap')
 
     file_extension = orm.Optional(str, column='blog_file_extension')
+
+    """ hack to make this act like a category for the exporter """
+    path = ''
 
 
 class Entry(db.Entity):

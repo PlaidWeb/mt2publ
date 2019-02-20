@@ -30,9 +30,7 @@ def parse_args(*args):
                         help="Restrict entries to a specific blog", default=None)
 
     parser.add_argument('--content', '-c', type=str, dest='content_dir',
-                        help='Output content directory')
-    parser.add_argument('--templates', '-t', type=str, dest='template_dir',
-                        help='Output template directory')
+                        help='Output content directory', default=None)
     parser.add_argument('--force', '-f', action='store_true', dest='force_overwrite',
                         help='Force overwriting of existing files')
 
@@ -41,9 +39,9 @@ def parse_args(*args):
     return parser.parse_args(*args)
 
 
-def main():
+def main(**args):
     """ main entry point """
-    config = parse_args()
+    config = parse_args(**args)
 
     logging.basicConfig(level=LOG_LEVELS[min(
         config.verbosity, len(LOG_LEVELS) - 1)])
@@ -71,3 +69,11 @@ def main():
         categories = blog.categories if blog else model.Category.select()
         for c in categories:
             print("TODO: process category " + c.path)
+            # category.process(c, config)
+        # if blog:
+        #   category.process(blog, config)
+
+        # TODO: also make a root category using blog.name and blog.description
+
+if __name__ == '__main__':
+    main()
