@@ -6,6 +6,7 @@ import re
 import os
 import html
 import html.parser
+import datetime
 
 from . import save_file
 
@@ -239,7 +240,11 @@ def process(entry, config, alias_templates):
             format_text(entry.more, nl2br)
     message.set_payload(body)
 
-    if entry.status not in [2, 4]:
+    # If the entry status isn't Published or Scheduled, or if it's Published from
+    # the future, map the status accordingly; otherwise it will infer
+    # SCHEDULED.
+    if entry.status not in [2, 4] or (entry.status == 2
+                                      and entry.created > datetime.datetime.now()):
         message['Status'] = PUBLISH_STATUS[entry.status]
 
     if entry.entry_type != 'entry':
