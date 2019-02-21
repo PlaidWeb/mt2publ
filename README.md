@@ -4,7 +4,7 @@ A tool to (partially) convert a Movable Type website for use with Publ.
 
 ## Basic usage
 
-Currently only SQLite databases are supported (although adding direct support for MySQL and Postgres isn't too hard). If you have a MySQL database dump you can convert it to SQLite via [mysql2sqlite](https://github.com/dumblob/mysql2sqlite).
+Currently only SQLite databases are supported (although adding direct support for MySQL and Postgres isn't too hard). If you have a MySQL database dump you can convert it to SQLite via [mysql2sqlite](https://github.com/dumblob/mysql2sqlite), and for Postgres you can follow [these instructions](https://manuelvanrijn.nl/blog/2012/01/18/convert-postgresql-to-sqlite/).
 
 ```
 pip install mt2publ
