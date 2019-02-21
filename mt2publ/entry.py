@@ -213,16 +213,16 @@ def process(entry, config, alias_templates):
 
     message = email.message.Message()
 
-    message['Import-ID'] = str(entry.entry_id)
-
     if entry.title:
         message['Title'] = demarkdown(entry.title)
 
     if entry.created:
         message['Date'] = entry.created.isoformat()
 
-    if entry.last_modified:
+    if entry.last_modified and entry.last_modified != entry.created:
         message['Last-Modified'] = entry.last_modified.isoformat()
+
+    message['Import-ID'] = str(entry.entry_id)
 
     if entry.atom_tag:
         message['Atom-Tag'] = entry.atom_tag
@@ -230,6 +230,8 @@ def process(entry, config, alias_templates):
     if entry.author.author_id > 0:
         if entry.author.name:
             message['Author'] = entry.author.name
+        if entry.author.basename:
+            message['Author-Username'] = entry.author.basename
         if entry.author.url:
             message['Author-URL'] = entry.author.url
         if entry.author.email:

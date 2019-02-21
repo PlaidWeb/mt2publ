@@ -36,6 +36,7 @@ It has been tested successfully to extract entries and categories from a single 
 * Preserves the original entry ID as `Import-ID`
 * `Entry-Type` for entry vs. page
 * `Atom-Tag` for the original, inferior atom `<id>` elements
+* Authorship information (name, email, URL)
 
 ### What won't be supported
 
