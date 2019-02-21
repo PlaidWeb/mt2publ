@@ -33,7 +33,7 @@ setup(
     author_email='fluffy@beesbuzz.biz',
 
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Intended Audience :: End Users/Desktop',
 

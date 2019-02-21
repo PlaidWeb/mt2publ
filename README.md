@@ -35,11 +35,12 @@ It has been tested successfully to extract entries and categories from a single 
 * Sets path aliases of "entry" and "page" assets based on the original template mappings
 * Preserves the original entry ID as `Import-ID`
 * `Entry-Type` for entry vs. page
+* `Atom-Tag` for the original, inferior atom `<id>` elements
 
 ### What won't be supported
 
 * Asset relocation
-* Markdown conversion
+* Converting HTML/richtext entries to Markdown (use [Pandoc](http://pandoc.org) if you're feeling brave)
 * Native multiple categories (unless those become [supported by Publ](https://github.com/PlaidWeb/Publ/issues/163))
 * Things which are absolutely too complicated to get right, such as:
     * Full automated template conversion
@@ -51,3 +52,23 @@ It has been tested successfully to extract entries and categories from a single 
 * Native support for MySQL, Oracle, and Postgres databases
 * Tags
 * Output backends for other blogging systems (Jekyll, Pelican, etc.)
+* Comment export (probably using the WordPress comment dump format, since many hosted comment systems support that, notably Disqus)
+
+## Data compatibility notes
+
+### Entry dates
+
+The `Date` and `Last-Modified` are based on local time, since Movable Type only provides a single global timezone offset (not even a locale!) for the *entire blog*.
+
+### Feed `<id>`s
+
+`Atom-Tag` potentially leaks data and shouldn't be used, unless you are really worried about Atom feed subscribers seeing duplicate entries. If you still want to use this feature, the appropriate XML fragment would be:
+
+```jinja
+{% if entry['Atom-Tag'] %}
+<id>{{entry['Atom-Tag']}}</id>
+{% else %}
+<id>urn:uuid:{{entry.uuid}}</id>
+{% endif %}
+```
+
