@@ -224,6 +224,9 @@ def process(entry, config, alias_templates):
     if entry.last_modified:
         message['Last-Modified'] = entry.last_modified.isoformat()
 
+    if entry.atom_tag:
+        message['Atom-Tag'] = entry.atom_tag
+
     if entry.author.author_id > 0:
         if entry.author.name:
             message['Author'] = entry.author.name

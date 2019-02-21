@@ -47,6 +47,8 @@ class Entry(db.Entity):
     entry_id = orm.PrimaryKey(int, column='entry_id')
     blog = orm.Optional(Blog, column='entry_blog_id')
 
+    atom_tag = orm.Optional(str, column='entry_atom_id')
+
     allow_comments = orm.Optional(bool, column='entry_allow_comments')
     author = orm.Optional(Author, column='entry_author_id')
     basename = orm.Optional(str, column='entry_basename')
