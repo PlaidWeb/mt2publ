@@ -34,6 +34,9 @@ def parse_args(*args):
     parser.add_argument('--force', '-f', action='store_true', dest='force_overwrite',
                         help='Force overwriting of existing files')
 
+    parser.add_argument('--show', '-s', action='store_true', dest='show_files',
+                        help='Show file contents on standard output')
+
     parser.add_argument('db', type=str, help='SQLite database file')
 
     return parser.parse_args(*args)

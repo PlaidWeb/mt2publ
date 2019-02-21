@@ -12,6 +12,11 @@ LOGGER = logging.getLogger('mt2publ')
 def save_file(message, dest, filename, config):
     """ save the message data to the specified file as an atomic operation """
     LOGGER.info("Output filename: %s", filename)
+
+    if config.show_files:
+        print('\n===== File: {} =====\n'.format(filename))
+        print(message)
+
     if not dest:
         LOGGER.debug("No destination set")
         return
