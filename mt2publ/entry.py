@@ -146,6 +146,7 @@ def build_path_aliases(entry, category, templates, archive_type):
     # see
     # https://movabletype.org/documentation/appendices/archive-file-path-specifiers.html
     ext = '.' + entry.blog.file_extension
+    indexfile = f'index.{ext}'
     params = {
         'a': entry.author.basename,
         'b': entry.basename,
@@ -159,7 +160,7 @@ def build_path_aliases(entry, category, templates, archive_type):
         'F': entry.basename,
         'h': entry.created.strftime('%H'),
         'H': entry.created.strftime('%-H'),
-        'i': 'index' + ext,
+        'i': indexfile,
         'I': 'index',
         'j': entry.created.strftime('%j'),
         'm': entry.created.strftime('%m'),
@@ -201,6 +202,10 @@ def build_path_aliases(entry, category, templates, archive_type):
         out = '/' + out
         out = out.replace('//', '/')
         aliases.append(out)
+
+        # also lop off the index, if present
+        if out.endswith(indexfile):
+            aliases.append(out[:-len(indexfile)])
 
     return aliases
 

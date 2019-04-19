@@ -42,9 +42,9 @@ def parse_args(*args):
     return parser.parse_args(*args)
 
 
-def main(**args):
+def main(*args):
     """ main entry point """
-    config = parse_args(**args)
+    config = parse_args(*args)
 
     logging.basicConfig(level=LOG_LEVELS[min(
         config.verbosity, len(LOG_LEVELS) - 1)])
