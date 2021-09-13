@@ -1,6 +1,8 @@
 # mt2publ
 
-A tool to (partially) convert a Movable Type website for use with Publ.
+A tool to (partially) convert a Movable Type website for use with Publ, without having a working Movable Type installation.
+
+If your Movable Type installation still works it's probably easier to use Movable Type itself to generate new site files via a template that emits the entry files directly.
 
 ## Basic usage
 
